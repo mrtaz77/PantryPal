@@ -8,7 +8,11 @@ import {
 	Button,
 	Modal,
 	TextField,
+	InputAdornment,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import RemoveIcon from '@mui/icons-material/Remove';
+import AddIcon from '@mui/icons-material/Add';
 import { firestore } from "@/config/firebase";
 import {
 	collection,
@@ -39,6 +43,8 @@ export default function Home() {
 	const [pantry, setPantry] = useState([]);
 	const [open, setOpen] = useState(false);
 	const [itemName, setItemName] = useState('');
+	const [searchQuery, setSearchQuery] = useState("");
+
 
 	// Function to fetch pantry items from Firestore
 	const updatePantry = async () => {
@@ -100,9 +106,32 @@ export default function Home() {
 		}
 	};
 
+	// Function to delete an item from the pantry
+	const deleteItem = async (item) => {
+		try {
+			const docRef = doc(collection(firestore, "pantry"), item.toLowerCase());
+			const docSnap = await getDoc(docRef);
+
+			if (docSnap.exists()) {
+				await deleteDoc(docRef);
+			} else {
+				console.warn("Item does not exist in the pantry");
+			}
+			await updatePantry();
+		} catch (error) {
+			console.error("Error removing item:", error);
+		}
+	};
+
+
 	// Calculate total number of items
 	const totalItems = pantry.reduce((total, item) => total + item.quantity, 0);
-	
+
+	// Filtered pantry items based on search query
+	const filteredPantry = pantry.filter(({ name }) =>
+		name.toLowerCase().includes(searchQuery.toLowerCase())
+	);
+
 	// Open and close modal handlers
 	const handleOpen = () => setOpen(true);
 	const handleClose = () => setOpen(false);
@@ -160,6 +189,48 @@ export default function Home() {
 			<Button variant="contained" onClick={handleOpen}>
 				Add New Item
 			</Button>
+			<TextField
+				label="Search"
+				variant="outlined"
+				value={searchQuery}
+				onChange={(e) => setSearchQuery(e.target.value)}
+				InputProps={{
+					startAdornment: (
+						<InputAdornment position="start">
+							<SearchIcon />
+						</InputAdornment>
+					),
+					// Add styles for the input and adornment
+					sx: {
+						'& .MuiOutlinedInput-root': {
+							borderRadius: '25px', // Capsule shape
+							borderColor: '#2D7CEE', // Border color
+							borderWidth: '1px', // Thin border
+							'& fieldset': {
+								borderColor: '#2D7CEE',
+							},
+							'&:hover fieldset': {
+								borderColor: '#2D7CEE', // Hover color
+							},
+							'&.Mui-focused fieldset': {
+								borderColor: '#2D7CEE', // Focus color
+							},
+						},
+						'& .MuiInputAdornment-positionStart': {
+							color: '#2D7CEE', // Icon color
+						},
+					},
+				}}
+				sx={{
+					width: '800px',
+					height: '50px',
+					marginBottom: 2,
+					// Outer container styling
+					borderRadius: '25px', // Capsule shape
+					borderColor: '#2D7CEE', // Border color
+					borderWidth: '1px', // Thin border
+				}}
+			/>
 			<Box border={"1px solid #333"}>
 				<Box
 					width="800px"
@@ -174,7 +245,7 @@ export default function Home() {
 					</Typography>
 				</Box>
 				<Stack width="800px" height="300px" spacing={2} overflow={"auto"}>
-					{pantry.map(({ name, quantity }) => (
+					{filteredPantry.map(({ name, quantity }) => (
 						<Box
 							key={name}
 							width="100%"
@@ -191,9 +262,43 @@ export default function Home() {
 							<Typography variant={"h3"} color={"#333"} textAlign={"center"}>
 								Quantity: {quantity}
 							</Typography>
-							<Button variant="contained" onClick={() => removeItem(name)}>
-								Remove
-							</Button>
+							<Box
+								display="flex"
+								alignItems="center"
+								justifyContent="center"
+								gap={1} // Adjust gap between buttons
+							>
+								<Button
+									variant="contained"
+									onClick={() => addItem(name)}
+									sx={{
+										minWidth: '25px', // Decreased width
+										minHeight: '30px',
+										backgroundColor: '#00BF56', // Custom color
+										color: '#fff',
+										'&:hover': {
+											backgroundColor: '#009B46', // Darker shade on hover
+										},
+									}}
+								>
+									<AddIcon />
+								</Button>
+								<Button
+									variant="contained"
+									onClick={() => removeItem(name)}
+									sx={{
+										minWidth: '25px', // Decreased width
+										minHeight: '30px',
+										backgroundColor: '#E74032', // Custom color
+										color: '#fff',
+										'&:hover': {
+											backgroundColor: '#d63628', // Darker shade on hover
+										},
+									}}
+								>
+									<RemoveIcon />
+								</Button>
+							</Box>
 						</Box>
 					))}
 				</Stack>

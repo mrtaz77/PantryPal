@@ -100,6 +100,9 @@ export default function Home() {
 		}
 	};
 
+	// Calculate total number of items
+	const totalItems = pantry.reduce((total, item) => total + item.quantity, 0);
+	
 	// Open and close modal handlers
 	const handleOpen = () => setOpen(true);
 	const handleClose = () => setOpen(false);
@@ -194,6 +197,19 @@ export default function Home() {
 						</Box>
 					))}
 				</Stack>
+				<Box
+					width="100%"
+					minHeight="50px"
+					display={"flex"}
+					justifyContent={"center"}
+					alignItems={"center"}
+					bgcolor={"#e0e0e0"}
+					paddingX={5}
+				>
+					<Typography variant={"h4"} color={"#333"} textAlign={"center"}>
+						Total Items: {totalItems}
+					</Typography>
+				</Box>
 			</Box>
 		</Box>
 	);

@@ -1,321 +1,275 @@
-"use client";
+// app/page.js
 
-import { useState, useEffect } from "react";
+"use client"; // Opt-in to client-side rendering
+
+import React from "react";
 import {
 	Box,
-	Stack,
 	Typography,
 	Button,
-	Modal,
-	TextField,
-	InputAdornment,
+	Stack,
+	Container,
+	AppBar,
+	Toolbar,
+	CssBaseline,
+	Divider
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import RemoveIcon from '@mui/icons-material/Remove';
-import AddIcon from '@mui/icons-material/Add';
-import { firestore } from "@/config/firebase";
-import {
-	collection,
-	doc,
-	getDocs,
-	query,
-	setDoc,
-	deleteDoc,
-	getDoc,
-} from "firebase/firestore";
+import Image from 'next/image'
+import Link from 'next/link';
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import styles from "./globals.css";
+import logo from '../../public/logo.png';
+import SwiperComponent from "@/components/Swiper";
+import FeatureCard from "@/components/Card";
 
-const style = {
-	position: "absolute",
-	top: "50%",
-	left: "50%",
-	transform: "translate(-50%, -50%)",
-	width: 400,
-	bgcolor: "white",
-	border: "2px solid #000",
-	boxShadow: 24,
-	p: 4,
-	display: "flex",
-	flexDirection: "column",
-	gap: 3,
-};
+const theme = createTheme({
+	typography: {
+		fontFamily: "Arial, sans-serif",
+	},
+	palette: {
+		primary: {
+			main: "#00BF56", // Custom primary color
+		},
+		secondary: {
+			main: "#00BF56", // Custom secondary color
+		},
+	},
+});
 
-export default function Home() {
-	const [pantry, setPantry] = useState([]);
-	const [open, setOpen] = useState(false);
-	const [itemName, setItemName] = useState('');
-	const [searchQuery, setSearchQuery] = useState("");
-
-
-	// Function to fetch pantry items from Firestore
-	const updatePantry = async () => {
-		try {
-			const snapshot = query(collection(firestore, "pantry"));
-			const docs = await getDocs(snapshot);
-			const pantryList = [];
-			docs.forEach((doc) => {
-				pantryList.push({ name: doc.id, ...doc.data() });
-			});
-			setPantry(pantryList);
-		} catch (error) {
-			console.error("Error fetching pantry data:", error);
-		}
-	};
-
-	// Function to add a new item to the pantry
-	const addItem = async (item) => {
-		if (!item) {
-			alert("Item name cannot be empty");
-			return;
-		}
-
-		try {
-			const docRef = doc(collection(firestore, "pantry"), item.toLowerCase());
-			const docSnap = await getDoc(docRef);
-
-			if (docSnap.exists()) {
-				const { quantity } = docSnap.data();
-				await setDoc(docRef, { quantity: quantity + 1 });
-			} else {
-				await setDoc(docRef, { quantity: 1 });
-			}
-			await updatePantry();
-		} catch (error) {
-			console.error("Error adding item:", error);
-		}
-	};
-
-	// Function to remove an item from the pantry
-	const removeItem = async (item) => {
-		try {
-			const docRef = doc(collection(firestore, "pantry"), item.toLowerCase());
-			const docSnap = await getDoc(docRef);
-
-			if (docSnap.exists()) {
-				const { quantity } = docSnap.data();
-				if (quantity === 1) {
-					await deleteDoc(docRef);
-				} else {
-					await setDoc(docRef, { quantity: quantity - 1 });
-				}
-			} else {
-				console.warn("Item does not exist in the pantry");
-			}
-			await updatePantry();
-		} catch (error) {
-			console.error("Error removing item:", error);
-		}
-	};
-
-	// Function to delete an item from the pantry
-	const deleteItem = async (item) => {
-		try {
-			const docRef = doc(collection(firestore, "pantry"), item.toLowerCase());
-			const docSnap = await getDoc(docRef);
-
-			if (docSnap.exists()) {
-				await deleteDoc(docRef);
-			} else {
-				console.warn("Item does not exist in the pantry");
-			}
-			await updatePantry();
-		} catch (error) {
-			console.error("Error removing item:", error);
-		}
-	};
-
-
-	// Calculate total number of items
-	const totalItems = pantry.reduce((total, item) => total + item.quantity, 0);
-
-	// Filtered pantry items based on search query
-	const filteredPantry = pantry.filter(({ name }) =>
-		name.toLowerCase().includes(searchQuery.toLowerCase())
-	);
-
-	// Open and close modal handlers
-	const handleOpen = () => setOpen(true);
-	const handleClose = () => setOpen(false);
-
-	// Fetch pantry items on component mount
-	useEffect(() => {
-		updatePantry();
-	}, []);
-
+const LandingPage = () => {
 	return (
-		<Box
-			width="100vw"
-			height="100vh"
-			display={"flex"}
-			justifyContent={"center"}
-			flexDirection={"column"}
-			alignItems={"center"}
-			gap={2}
-		>
-			<Modal
-				open={open}
-				onClose={handleClose}
-				aria-labelledby="modal-modal-title"
-				aria-describedby="modal-modal-description"
-			>
-				<Box sx={style}>
-					<Typography id="modal-modal-title" variant="h6" component="h2">
-						Add Item
-					</Typography>
-					<Stack width="100%" direction={"row"} spacing={2}>
-						<TextField
-							id="outlined-basic"
-							label="Item"
-							variant="outlined"
-							fullWidth
-							value={itemName}
-							onChange={(e) => {
-								console.log("Input value:", e.target.value); // Debugging log
-								setItemName(e.target.value);
-							}}
-						/>
-						<Button
-							variant="outlined"
-							onClick={() => {
-								addItem(itemName);
-								setItemName('');
-								handleClose();
-							}}
-						>
-							Add
-						</Button>
-					</Stack>
-				</Box>
-			</Modal>
-			<Button variant="contained" onClick={handleOpen}>
-				Add New Item
-			</Button>
-			<TextField
-				label="Search"
-				variant="outlined"
-				value={searchQuery}
-				onChange={(e) => setSearchQuery(e.target.value)}
-				InputProps={{
-					startAdornment: (
-						<InputAdornment position="start">
-							<SearchIcon />
-						</InputAdornment>
-					),
-					// Add styles for the input and adornment
-					sx: {
-						'& .MuiOutlinedInput-root': {
-							borderRadius: '25px', // Capsule shape
-							borderColor: '#2D7CEE', // Border color
-							borderWidth: '1px', // Thin border
-							'& fieldset': {
-								borderColor: '#2D7CEE',
-							},
-							'&:hover fieldset': {
-								borderColor: '#2D7CEE', // Hover color
-							},
-							'&.Mui-focused fieldset': {
-								borderColor: '#2D7CEE', // Focus color
-							},
-						},
-						'& .MuiInputAdornment-positionStart': {
-							color: '#2D7CEE', // Icon color
-						},
-					},
-				}}
+		<ThemeProvider theme={theme}>
+			<CssBaseline />
+			<AppBar position="static">
+				<Toolbar>
+				</Toolbar>
+			</AppBar>
+			<AppBar
+				position="static"
 				sx={{
-					width: '800px',
-					height: '50px',
-					marginBottom: 2,
-					// Outer container styling
-					borderRadius: '25px', // Capsule shape
-					borderColor: '#2D7CEE', // Border color
-					borderWidth: '1px', // Thin border
+					backgroundColor: 'white', // Set the toolbar background color to white
+					boxShadow: 'none', // Remove box shadow if desired
+					marginBottom: 4
 				}}
-			/>
-			<Box border={"1px solid #333"}>
+			>
+				<Toolbar sx={{ justifyContent: 'space-between' }}>
+					<Box display="flex" alignItems="center">
+						<Image
+							src={logo} // Use the logo imported from public
+							alt="Logo"
+							width={210} // Set the desired width
+							height={175} // Set the desired height
+						/>
+					</Box>
+					<Box>
+						<Link href="/auth/login">
+							<Button
+								variant="outlined"
+								sx={{
+									marginRight: 1,
+									color: 'black', // Initial text color
+									borderColor: 'black', // Initial border color
+									transition: 'background-color 0.3s ease-in-out, color 0.3s ease-in-out',
+									fontSize: '16px', // Increase font size
+									fontWeight: 'bold', // Use bold font
+									'&:hover': {
+										backgroundColor: '#00BF56', // Change background on hover
+										color: 'white', // Change text color on hover
+										borderColor: '#00BF56', // Change border color on hover
+									},
+								}}
+							>
+								Login
+							</Button>
+						</Link>
+
+						{/* Signup Button */}
+						<Link href="/auth/signup">
+							<Button
+								variant="outlined"
+								sx={{
+									color: 'black',
+									borderColor: 'black',
+									transition: 'background-color 0.3s ease-in-out, color 0.3s ease-in-out',
+									fontSize: '16px', // Increase font size
+									fontWeight: 'bold', // Use bold font
+									'&:hover': {
+										backgroundColor: '#00BF56',
+										color: 'white',
+										borderColor: '#00BF56',
+									},
+								}}
+							>
+								Sign Up
+							</Button>
+						</Link>
+					</Box>
+				</Toolbar>
+			</AppBar>
+			<Container maxWidth="lg">
 				<Box
-					width="800px"
-					height="100px"
-					bgcolor={"#ADD8E6"}
-					display={"flex"}
-					justifyContent={"center"}
-					alignItems={"center"}
+					sx={{
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'space-between', // Distribute space between text and circle
+						position: 'relative',
+					}}
 				>
-					<Typography variant={"h2"} color={"#333"} textAlign={"center"}>
-						Pantry Items
+					{/* Text Section */}
+					<Box sx={{ flex: 1, paddingRight: 2 }}> {/* Flexbox for responsive layout */}
+						<Typography
+							variant="h1"
+							sx={{
+								fontSize: '80px', // Set font size
+								fontFamily: 'Archivo Black, sans-serif', // Set font family
+								fontWeight: 'bold', // Make the text bold
+								color: '#000000', // Set text color
+								marginBottom: 6, // Gutter bottom equivalent
+								position: 'relative', // Position relative to allow absolute positioning of the line
+								paddingBottom: '20px', // Additional space for the line
+							}}
+							gutterBottom
+						>
+							Welcome to PantryPal
+							{/* Horizontal line */}
+							<Box
+								sx={{
+									position: 'absolute',
+									bottom: 0,
+									left: 0,
+									height: '20px', // Line thickness
+									backgroundColor: '#00BF56', // Line color
+									width: '100%', // Extend line to the end of the text
+									zIndex: 1, // Ensure line is behind the text
+								}}
+							/>
+						</Typography>
+
+						<Typography
+							variant="h6"
+							sx={{
+								fontSize: '30px', // Set font size
+								fontFamily: 'Roboto, Helvetica, sans-serif', // Set font family
+								color: '#9DA5BF', // Set text color
+								marginBottom: 4, // Space between text and button
+							}}
+							gutterBottom
+						>
+							The best way to manage your pantry effortlessly.
+						</Typography>
+						<Link href="/auth/signup">
+							<Button
+								variant="outlined"
+								sx={{
+									color: 'black', // Initial text color
+									borderColor: 'black', // Initial border color
+									transition: 'background-color 0.3s ease-in-out, color 0.3s ease-in-out',
+									fontSize: '16px', // Increase font size
+									fontWeight: 'bold', // Use bold font
+									'&:hover': {
+										backgroundColor: '#00BF56', // Change background on hover
+										color: 'white', // Change text color on hover
+										borderColor: '#00BF56', // Change border color on hover
+									},
+									marginBottom: 6,
+								}}
+							>
+								Get Started
+							</Button>
+						</Link>
+					</Box>
+
+					{/* Circle containing SwiperComponent */}
+					<Box
+						sx={{
+							borderRadius: '50%', // Make it a circle
+							width: '300px', // Circle size
+							height: '300px', // Circle size
+							background: 'white', // Background color
+							border: '20px solid #00BF56', // Outer border
+							outline: '2px solid white', // Inner white border
+							overflow: 'hidden', // Hide overflow of the images
+							flexShrink: 0, // Prevent circle from shrinking
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+						}}
+					>
+						<SwiperComponent />
+					</Box>
+				</Box>
+				<Stack
+					direction="row"
+					spacing={4}
+					className={styles.featureSection}
+					justifyContent="space-between"
+				>
+					<Box
+						sx={{
+							display: 'flex', // Use flexbox
+							justifyContent: 'center', // Center horizontally
+							alignItems: 'center', // Center vertically
+							flexWrap: 'wrap', // Allow wrapping for smaller screens
+							marginTop: '40px', // Margin above the cards
+						}}
+					>
+						<FeatureCard
+							title="Easy Inventory"
+							description="Track your items with ease using PantryPal's intuitive interface."
+						/>
+						<FeatureCard
+							title="Recipe Organization"
+							description="Organize recipes according to your pantry"
+						/>
+						<FeatureCard
+							title="Recipe Suggestions"
+							description="Get suggestions for recipes based on your current pantry"
+						/>
+					</Box>
+				</Stack>
+			</Container>
+			<Box
+				sx={{
+					backgroundColor: 'black',
+					color: 'white',
+					padding: '20px',
+					width: '100%',
+				}}
+			>
+				{/* About Us Section */}
+				<Box sx={{ textAlign: 'left', marginBottom: '20px' }}>
+					<Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
+						About Us
+					</Typography>
+					<Typography variant="body1" sx={{ fontSize: '1rem' }}>
+						PantryPal is a web app for managing your pantry and organizing recipes.
 					</Typography>
 				</Box>
-				<Stack width="800px" height="300px" spacing={2} overflow={"auto"}>
-					{filteredPantry.map(({ name, quantity }) => (
-						<Box
-							key={name}
-							width="100%"
-							minHeight="150px"
-							display={"flex"}
-							justifyContent={"space-between"}
-							alignItems={"center"}
-							bgcolor={"#f0f0f0"}
-							paddingX={5}
+
+				{/* Divider */}
+				<Divider sx={{ backgroundColor: 'white', marginY: '20px' }} />
+
+				{/* Rights and Designer */}
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+					<Typography variant="body2" sx={{ fontSize: '1rem' }}>
+						All rights reserved &copy; 2024
+					</Typography>
+					<Typography
+						variant="body2"
+						sx={{ fontSize: '1rem', color: '#00BF56' }}
+					>
+						Designed by{' '}
+						<a
+							href="https://github.com/mrtaz77"
+							style={{ color: '#00BF56', textDecoration: 'none' }}
 						>
-							<Typography variant={"h3"} color={"#333"} textAlign={"center"}>
-								{name.charAt(0).toUpperCase() + name.slice(1)}
-							</Typography>
-							<Typography variant={"h3"} color={"#333"} textAlign={"center"}>
-								Quantity: {quantity}
-							</Typography>
-							<Box
-								display="flex"
-								alignItems="center"
-								justifyContent="center"
-								gap={1} // Adjust gap between buttons
-							>
-								<Button
-									variant="contained"
-									onClick={() => addItem(name)}
-									sx={{
-										minWidth: '25px', // Decreased width
-										minHeight: '30px',
-										backgroundColor: '#00BF56', // Custom color
-										color: '#fff',
-										'&:hover': {
-											backgroundColor: '#009B46', // Darker shade on hover
-										},
-									}}
-								>
-									<AddIcon />
-								</Button>
-								<Button
-									variant="contained"
-									onClick={() => removeItem(name)}
-									sx={{
-										minWidth: '25px', // Decreased width
-										minHeight: '30px',
-										backgroundColor: '#E74032', // Custom color
-										color: '#fff',
-										'&:hover': {
-											backgroundColor: '#d63628', // Darker shade on hover
-										},
-									}}
-								>
-									<RemoveIcon />
-								</Button>
-							</Box>
-						</Box>
-					))}
-				</Stack>
-				<Box
-					width="100%"
-					minHeight="50px"
-					display={"flex"}
-					justifyContent={"center"}
-					alignItems={"center"}
-					bgcolor={"#e0e0e0"}
-					paddingX={5}
-				>
-					<Typography variant={"h4"} color={"#333"} textAlign={"center"}>
-						Total Items: {totalItems}
+							icarus77
+						</a>
 					</Typography>
 				</Box>
 			</Box>
-		</Box>
+		</ThemeProvider>
 	);
-}
+};
+
+export default LandingPage;

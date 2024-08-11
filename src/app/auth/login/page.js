@@ -1,13 +1,13 @@
 'use client';
 
-import { Box, Typography, TextField, Button } from '@mui/material';
+import { Box, Typography, TextField, Button, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { firestore } from "@/config/firebase";
+import { auth } from "@/config/firebase";
 import {
 	signInWithEmailAndPassword,
-	getAuth
 } from "firebase/auth";
 
 export default function LoginPage() {
@@ -15,10 +15,7 @@ export default function LoginPage() {
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState(false);
 	const [errorMessage, setErrorMessage] = useState("");
-
-
-	// Instantiate the auth service SDK
-	const auth = getAuth();
+	const router = useRouter();
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -39,7 +36,6 @@ export default function LoginPage() {
 			);
 
 			const user = userCredential.user;
-			const router = useRouter();
 			router.push('/dashboard');
 
 		} catch (err) {
@@ -131,9 +127,37 @@ export default function LoginPage() {
 						Login
 					</Button>
 					{error && (
-						<Typography variant="body2" color="error" sx={{ marginTop: 2, textAlign: 'center' }}>
-							{errorMessage}
-						</Typography>
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								backgroundColor: '#F8D7DA', // Light red background
+								color: '#D32F2F', // Dark red text
+								padding: '24px',
+								borderRadius: '8px',
+								marginTop: 2,
+								width: '100%',
+								maxWidth: '350px',
+								justifyContent: 'space-between', // Space between text and close button
+								position: 'relative',
+								textAlign: 'left',
+							}}
+						>
+							<Typography variant="body2" sx={{ flex: 1 }}>
+								{errorMessage}
+							</Typography>
+							<IconButton
+								size="small"
+								onClick={() => setError(false)} // Function to close the error message
+								sx={{
+									color: '#D32F2F',
+									padding: 0,
+									marginLeft: '10px',
+								}}
+							>
+								<CloseIcon />
+							</IconButton>
+						</Box>
 					)}
 				</form>
 				<Box sx={{ textAlign: 'center', marginTop: 2 }}>

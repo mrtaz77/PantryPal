@@ -1,12 +1,13 @@
 'use client';
 
-import { Box, Typography, TextField, Button } from '@mui/material';
+import { Box, Typography, TextField, Button, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { firestore } from "@/config/firebase";
+import { useRouter } from 'next/navigation';
+import { auth } from "@/config/firebase";
 import {
 	createUserWithEmailAndPassword,
-	getAuth
+	updateProfile
 } from "firebase/auth";
 import { useState } from "react";
 
@@ -16,9 +17,7 @@ const Signup = () => {
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState(false);
 	const [errorMessage, setErrorMessage] = useState("");
-
-	// instantiate the auth service SDK
-	const auth = getAuth();
+	const router = useRouter();
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -26,6 +25,13 @@ const Signup = () => {
 		if (name === "username") setUsername(value);
 		if (name === "email") setEmail(value);
 		if (name === "password") setPassword(value);
+	};
+
+	const updateUserProfile = async (userCredential) => {
+		const user = userCredential.user;
+		await updateProfile(user, {
+			displayName: username,
+		});
 	};
 
 	// Handle user sign up with email and password
@@ -39,10 +45,7 @@ const Signup = () => {
 				email,
 				password
 			);
-
-			// Pull out user's data from the userCredential property
-			const user = userCredential.user;
-			const router = useRouter();
+			await updateUserProfile(userCredential);
 			router.push('/dashboard');
 		} catch (err) {
 			// Handle errors here
@@ -141,9 +144,36 @@ const Signup = () => {
 						Sign Up
 					</Button>
 					{error && (
-						<Typography variant="body2" color="error" sx={{ marginTop: 2, textAlign: 'center' }}>
-							{errorMessage}
-						</Typography>
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								backgroundColor: '#F8D7DA', // Light red background
+								color: '#D32F2F', // Dark red text
+								padding: '24px',
+								borderRadius: '8px',
+								width: '100%',
+								maxWidth: '350px',
+								justifyContent: 'space-between', // Space between text and close button
+								position: 'relative',
+								textAlign: 'left',
+							}}
+						>
+							<Typography variant="body2" sx={{ flex: 1 }}>
+								{errorMessage}
+							</Typography>
+							<IconButton
+								size="small"
+								onClick={() => setError(false)} // Function to close the error message
+								sx={{
+									color: '#D32F2F',
+									padding: 0,
+									marginLeft: '10px',
+								}}
+							>
+								<CloseIcon />
+							</IconButton>
+						</Box>
 					)}
 				</form>
 				<Box sx={{ textAlign: 'center', marginTop: 2 }}>

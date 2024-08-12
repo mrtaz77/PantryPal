@@ -4,7 +4,8 @@ import { Box, Typography, TextField, Button, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { auth } from "@/config/firebase";
+import { auth, firestore } from "@/config/firebase";
+import { getDocs, collection, query, where, orderBy, limit, addDoc, doc } from "firebase/firestore";
 import {
 	createUserWithEmailAndPassword,
 	updateProfile
@@ -19,6 +20,7 @@ const Signup = () => {
 	const [errorMessage, setErrorMessage] = useState("");
 	const router = useRouter();
 
+
 	const handleChange = (e) => {
 		const { name, value } = e.target;
 
@@ -27,16 +29,43 @@ const Signup = () => {
 		if (name === "password") setPassword(value);
 	};
 
-	const updateUserProfile = async (userCredential) => {
-		const user = userCredential.user;
-		await updateProfile(user, {
-			displayName: username,
+	const checkIfUserNameExists = async (userName) => {
+		const usersRef = collection(firestore, "users");
+		const q = query(usersRef, where("userName", "==", userName));
+		const querySnapshot = await getDocs(q);
+		if(!querySnapshot.empty) return true;
+		return false;
+	}
+	const addNewUser = async (userName) => {
+		const usersRef = collection(firestore, "users");
+	
+		// Get the max documentId
+		const q = query(usersRef, orderBy("userId", "desc"), limit(1));
+		const querySnapshot = await getDocs(q);
+		
+		let newUserId = 1;
+		if (!querySnapshot.empty) {
+			const doc = querySnapshot.docs[0];
+			newUserId = doc.data().userId + 1;
+		}
+
+		// Add a new user
+		await addDoc(usersRef, {
+			userId: newUserId,
+			userName: userName
 		});
-	};
+	}
 
 	// Handle user sign up with email and password
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		const userExists = await checkIfUserNameExists(username);
+
+		if(userExists) {
+			setError(true);
+			setErrorMessage("Cannot use this username");
+			return;
+		}
 
 		try {
 			// create a new user with email and password
@@ -45,7 +74,10 @@ const Signup = () => {
 				email,
 				password
 			);
-			await updateUserProfile(userCredential);
+			await updateProfile(userCredential.user, {
+				displayName: username,
+			});
+			await addNewUser(username);
 			router.push('/dashboard');
 		} catch (err) {
 			// Handle errors here

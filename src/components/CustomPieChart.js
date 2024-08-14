@@ -50,7 +50,7 @@ const CustomPieChart = ({ items, totalItems, xLabel, yLabel, title }) => {
 						{
 							data: chartData,
 							innerRadius: 70,
-							outerRadius: 100,
+							outerRadius: 120,
 							paddingAngle: 5,
 							cornerRadius: 5,
 							highlightScope: { faded: 'global', highlighted: 'item' },
@@ -59,7 +59,7 @@ const CustomPieChart = ({ items, totalItems, xLabel, yLabel, title }) => {
 						},
 					]}
 					width={400}
-					height={200}
+					height={300}
 				>
 					<PieCenterLabel>{title}# {totalItems}</PieCenterLabel>
 				</PieChart>

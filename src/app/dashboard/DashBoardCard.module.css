@@ -1,0 +1,30 @@
+.tableContainer {
+	width: 100%;
+	margin-top: 16px;
+	/* Equivalent to mt: 2 in MUI */
+}
+
+.tableHeadCell {
+	font-size: 22px;
+	background-color: #F7F9FC;
+	color: #6c757d;
+	/* textSecondary color */
+}
+
+.tableBodyCell {
+	font-size: 22px;
+	font-family: 'Satoshi';
+	font-weight: 50;
+}
+
+.button {
+	width: 70px;
+	background-color: #00BF56;
+	color: white;
+	margin-bottom: 16px;
+	/* Equivalent to mb: 2 in MUI */
+}
+
+.button:hover {
+	background-color: #2D7CEE;
+}

@@ -46,6 +46,7 @@ export default function DashboardPage() {
 	const [pantries, setPantries] = useState([]);
 	const [editingPantry, setEditingPantry] = useState(null);
 	const [pantryName, setPantryName] = useState('');
+	const [loadingData, setLoadingData] = useState(true);
 	const [open, setOpen] = useState(false);
 
 	const router = useRouter();
@@ -71,6 +72,7 @@ export default function DashboardPage() {
 
 			setPantries(pantriesData.filter(pantry => pantry !== null));
 		}
+		setLoadingData(false);
 	};
 
 	const handleEditClick = (id, currentName) => {
@@ -129,6 +131,14 @@ export default function DashboardPage() {
 			fetchPantries();
 		}
 	}, [user]);
+
+	if (loading || loadingData) {
+		return (
+			<Box sx={{ padding: 4 }}>
+				<Typography variant="h5">Loading...</Typography>
+			</Box>
+		);
+	}
 
 	if (!user) {
 		return (

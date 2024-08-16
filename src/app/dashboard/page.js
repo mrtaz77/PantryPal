@@ -200,6 +200,7 @@ export default function DashboardPage() {
 								xLabel="pantryName"
 								yLabel="totalQuantity"
 								title="Chart"
+								yAxisLabel="Total Items"
 							/>
 						</CardContent>
 					</Card>

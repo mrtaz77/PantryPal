@@ -3,7 +3,6 @@ import { PieChart } from '@mui/x-charts/PieChart';
 import { Box, Typography } from '@mui/material';
 import { useDrawingArea } from '@mui/x-charts/hooks';
 import { styled } from '@mui/material/styles';
-import { DefaultizedPieValueType } from '@mui/x-charts/models';
 
 const StyledText = styled('text')(({ theme }) => ({
 	fill: theme.palette.text.primary,
@@ -51,8 +50,6 @@ const CustomPieChart = ({ items, totalItems, xLabel, yLabel, title }) => {
 							data: chartData,
 							innerRadius: 70,
 							outerRadius: 120,
-							paddingAngle: 5,
-							cornerRadius: 5,
 							highlightScope: { faded: 'global', highlighted: 'item' },
 							faded: { innerRadius: 50, additionalRadius: -30, color: 'gray' },
 							arcLabel: getArcLabel,

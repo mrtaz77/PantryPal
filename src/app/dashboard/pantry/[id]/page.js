@@ -20,8 +20,23 @@ import EditIcon from '@mui/icons-material/Edit';
 import CustomPieChart from '@/components/CustomPieChart';
 import CustomBarChart from '@/components/CustomBarChart';
 import ItemCarousel from '@/components/ItemCarousel';
-import { firestore } from '@/config/firebase';
-import { doc, getDoc, updateDoc, serverTimestamp, increment, deleteDoc, arrayRemove, arrayUnion, addDoc, collection, query } from 'firebase/firestore';
+import { 
+	doc,
+	getDoc, 
+	updateDoc, 
+	serverTimestamp, 
+	increment, 
+	deleteDoc, 
+	arrayRemove, 
+	arrayUnion, 
+	addDoc, 
+	collection,
+} from 'firebase/firestore';
+import {
+	ref,
+	getDownloadURL,
+} from 'firebase/storage';
+import { firestore, storage } from '@/config/firebase';
 
 const style = {
 	position: 'absolute',
@@ -49,16 +64,16 @@ export default function PantryPage({ params }) {
 
 	const fetchPantryData = async () => {
 		if (!params.id) return;
-
+	
 		try {
 			const pantryDocRef = doc(firestore, 'pantries', params.id);
 			const pantryDoc = await getDoc(pantryDocRef);
-
+	
 			if (!pantryDoc.exists()) {
 				console.log('No such pantry!');
 				return;
 			}
-
+	
 			const pantryData = pantryDoc.data();
 			setPantry({
 				...pantryData,
@@ -66,17 +81,26 @@ export default function PantryPage({ params }) {
 				lastUpdate: pantryData.lastUpdate?.toDate ? pantryData.lastUpdate.toDate() : new Date(pantryData.lastUpdate),
 			});
 			setEditedName(pantryData.pantryName);
-
+	
 			// Fetch the items
 			const itemsRefs = pantryData.items || [];
-			const itemsPromises = itemsRefs.map(itemRef => getDoc(itemRef));
-			const itemsSnapshots = await Promise.all(itemsPromises);
+			const itemsPromises = itemsRefs.map(async (itemRef) => {
+				const itemDoc = await getDoc(itemRef);
+				const itemData = itemDoc.data();
+				const itemId = itemDoc.id;
 
-			const itemsData = itemsSnapshots.map(snapshot => ({
-				...snapshot.data(),
-				itemId: snapshot.id,
-			}));
-
+				// Check if the image extension is valid
+				let imageUrl = '';
+				if (itemData.imageExt && ['.jpg', '.jpeg', '.png'].includes(itemData.imageExt.toLowerCase())) {
+					const imageRef = ref(storage, `Img/${itemId}${itemData.imageExt}`);
+					imageUrl = await getDownloadURL(imageRef);
+				}
+	
+				return { ...itemData, itemId, imageUrl };
+			});
+	
+			const itemsData = await Promise.all(itemsPromises);
+			console.log("🚀 ~ fetchPantryData ~ itemsData:", itemsData)
 			setItems(itemsData);
 		} catch (error) {
 			console.error('Error fetching pantry data:', error);
@@ -84,7 +108,6 @@ export default function PantryPage({ params }) {
 			setLoadingData(false);
 		}
 	};
-
 	const handleEditClick = () => {
 		setIsEditing(true);
 	};

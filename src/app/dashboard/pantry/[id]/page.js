@@ -20,20 +20,21 @@ import EditIcon from '@mui/icons-material/Edit';
 import CustomPieChart from '@/components/CustomPieChart';
 import CustomBarChart from '@/components/CustomBarChart';
 import ItemCarousel from '@/components/ItemCarousel';
-import { 
+import {
 	doc,
-	getDoc, 
-	updateDoc, 
-	serverTimestamp, 
-	increment, 
-	deleteDoc, 
-	arrayRemove, 
-	arrayUnion, 
-	addDoc, 
+	getDoc,
+	updateDoc,
+	serverTimestamp,
+	increment,
+	deleteDoc,
+	arrayRemove,
+	arrayUnion,
+	addDoc,
 	collection,
 } from 'firebase/firestore';
 import {
 	ref,
+	uploadBytes,
 	getDownloadURL,
 } from 'firebase/storage';
 import { firestore, storage } from '@/config/firebase';
@@ -64,16 +65,16 @@ export default function PantryPage({ params }) {
 
 	const fetchPantryData = async () => {
 		if (!params.id) return;
-	
+
 		try {
 			const pantryDocRef = doc(firestore, 'pantries', params.id);
 			const pantryDoc = await getDoc(pantryDocRef);
-	
+
 			if (!pantryDoc.exists()) {
 				console.log('No such pantry!');
 				return;
 			}
-	
+
 			const pantryData = pantryDoc.data();
 			setPantry({
 				...pantryData,
@@ -81,7 +82,7 @@ export default function PantryPage({ params }) {
 				lastUpdate: pantryData.lastUpdate?.toDate ? pantryData.lastUpdate.toDate() : new Date(pantryData.lastUpdate),
 			});
 			setEditedName(pantryData.pantryName);
-	
+
 			// Fetch the items
 			const itemsRefs = pantryData.items || [];
 			const itemsPromises = itemsRefs.map(async (itemRef) => {
@@ -95,12 +96,11 @@ export default function PantryPage({ params }) {
 					const imageRef = ref(storage, `Img/${itemId}${itemData.imageExt}`);
 					imageUrl = await getDownloadURL(imageRef);
 				}
-	
+
 				return { ...itemData, itemId, imageUrl };
 			});
-	
+
 			const itemsData = await Promise.all(itemsPromises);
-			console.log("🚀 ~ fetchPantryData ~ itemsData:", itemsData)
 			setItems(itemsData);
 		} catch (error) {
 			console.error('Error fetching pantry data:', error);
@@ -222,11 +222,11 @@ export default function PantryPage({ params }) {
 		const newItem = {
 			itemName: itemName.trim(),
 			quantity: quantity,
+			imageExt: ''
 		};
 
 		try {
 			const itemRef = await addDoc(collection(firestore, 'items'), newItem);
-			console.log("🚀 ~ addItem ~ itemRef:", itemRef);
 			const pantryRef = doc(firestore, 'pantries', params.id);
 			await updateDoc(pantryRef, {
 				totalQuantity: increment(quantity),
@@ -243,6 +243,40 @@ export default function PantryPage({ params }) {
 	const filteredItems = items.filter(item =>
 		item.itemName.toLowerCase().includes(searchQuery.toLowerCase())
 	);
+
+	const handleImgUpload = async (file, fileExtension, itemId) => {
+		try {
+			const storageRef = ref(storage, `Img/${itemId}${fileExtension}`);
+			await uploadBytes(storageRef, file);
+			const itemRef = doc(firestore, `items/${itemId}`);
+			await updateDoc(itemRef, {
+				imageExt: fileExtension,
+			});
+			const pantryRef = doc(firestore, 'pantries', params.id);
+			await updateDoc(pantryRef, {
+				lastUpdate: serverTimestamp(),
+			});
+			await fetchPantryData();
+		} catch (error) {
+			console.error('Error uploading image:', error);
+		}
+	};
+
+	const handleImgDelete = async (itemId) => {
+		try {
+			const itemRef = doc(firestore, `items/${itemId}`);
+			await updateDoc(itemRef, {
+				imageExt: '',
+			});
+			const pantryRef = doc(firestore, 'pantries', params.id);
+			await updateDoc(pantryRef, {
+				lastUpdate: serverTimestamp(),
+			});
+			await fetchPantryData();
+		} catch (error) {
+			console.error('Error deleting image:', error);
+		}
+	};
 
 	// Open and close modal handlers
 	const handleOpen = () => setOpen(true);
@@ -393,6 +427,8 @@ export default function PantryPage({ params }) {
 								onIncrementClick={handleIncrementClick}
 								onRemoveClick={handleDecrementClick}
 								onDeleteClick={handleDeleteClick}
+								onImgUpload={handleImgUpload}
+								onImgDelete={handleImgDelete}
 							/>
 						</CardContent>
 					</Card>

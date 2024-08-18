@@ -1,25 +1,43 @@
-import React from 'react';
-import { Box, Typography, Grid, Button } from '@mui/material';
-import Carousel from 'react-material-ui-carousel';
+'use client';
+
+import React, { useState } from 'react';
+import { Box, Typography, Grid, Button, Dialog, DialogContent, IconButton } from '@mui/material';
+import Carousel from 'react-material-ui-carousel'; // Ensure this library is installed
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import ImageCard from './ImageCard';
+import PreviewIcon from '@mui/icons-material/Preview';
+import CloseIcon from '@mui/icons-material/Close';
 
 function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick }) {
-	// Group items into sets of three
-	const groupedItems = [];
+	const [previewOpen, setPreviewOpen] = useState(false);
+	const [previewImage, setPreviewImage] = useState('');
+
+	// Handle image preview
+	const handlePreview = (imageUrl) => {
+		setPreviewImage(imageUrl);
+		setPreviewOpen(true);
+	};
+
+	// Close the modal
+	const handleClose = () => {
+		setPreviewOpen(false);
+	};
+
+
+	// Group indices of items into sets of three
+	const groupedIndices = [];
 
 	if (items.length < 4) {
-		groupedItems.push(items);
+		groupedIndices.push(items.map((_, index) => index));
 	} else {
 		for (let i = 0; i < items.length; i++) {
 			const group = [
-				items[i],
-				items[(i + 1) % items.length],
-				items[(i + 2) % items.length],
+				i,
+				(i + 1) % items.length,
+				(i + 2) % items.length,
 			];
-			groupedItems.push(group);
+			groupedIndices.push(group);
 		}
 	}
 
@@ -29,7 +47,7 @@ function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick
 			animation="slide"  // Use slide animation
 			navButtonsAlwaysVisible={false} // Keep the navigation buttons always visible
 		>
-			{groupedItems.map((group, index) => (
+			{groupedIndices.map((group, index) => (
 				<Grid
 					container
 					key={index}
@@ -39,8 +57,8 @@ function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick
 						justifyContent: 'center',
 					}}
 				>
-					{group.map((item, idx) => (
-						<Grid item xs={12} md={4} key={idx}>
+					{group.map((itemIndex) => (
+						<Grid item xs={12} md={4} key={itemIndex}>
 							<Box
 								sx={{
 									padding: 3,
@@ -64,15 +82,107 @@ function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick
 									}}
 								>
 									<Typography variant="h6" fontWeight="bold">
-										{item.itemName}
+										{items[itemIndex].itemName}
 									</Typography>
 									<Typography variant="h6" fontWeight="bold">
-										{item.quantity}
+										{items[itemIndex].quantity}
 									</Typography>
 								</Box>
 
 								{/* Placeholder for Image */}
-								<ImageCard imageUrl={item.imageUrl} />
+								<Box
+									sx={{
+										width: '100%',
+										height: 400,
+										backgroundColor: '#e0e0e0',
+										marginY: 2,
+										borderRadius: 2,
+										display: 'flex',
+										justifyContent: 'center',
+										alignItems: 'center',
+										cursor: items[itemIndex].imageUrl ? 'pointer' : 'default',
+										position: 'relative', // Necessary for overlay
+										overflow: 'hidden', // Ensures image fits within the box
+									}}
+									onClick={() => items[itemIndex].imageUrl && handlePreview(items[itemIndex].imageUrl)}
+								>
+									{items[itemIndex].imageUrl ? (
+										<>
+											{/* Image */}
+											<img
+												src={items[itemIndex].imageUrl}
+												alt={items[itemIndex].itemName}
+												style={{
+													width: '100%',
+													height: '100%',
+													objectFit: 'contain', // Ensures entire image is shown
+													borderRadius: '8px',
+												}}
+											/>
+											{/* Hover effect */}
+											<Box
+												sx={{
+													position: 'absolute',
+													top: 0,
+													left: 0,
+													width: '100%',
+													height: '100%',
+													backgroundColor: 'rgba(0, 0, 0, 0.4)', // Shade overlay
+													display: 'flex',
+													justifyContent: 'center',
+													alignItems: 'center',
+													opacity: 0,
+													transition: 'opacity 0.3s ease-in-out', // Smooth transition
+													'&:hover': {
+														opacity: 1, // Show overlay on hover
+													},
+												}}
+												onClick={(e) => {
+													e.stopPropagation(); // Prevents triggering parent onClick
+													handlePreview(items[itemIndex].imageUrl); // Show full image
+												}}
+											>
+												<PreviewIcon
+													sx={{
+														color: 'white',
+														fontSize: 50,
+													}}
+												/>
+											</Box>
+										</>
+									) : null}
+								</Box>
+
+								{/* Modal for image preview */}
+								<Dialog
+									open={previewOpen}
+									onClose={handleClose}
+									maxWidth="md"
+									fullWidth
+								>
+									<DialogContent sx={{ padding: 0 }}>
+										<img
+											src={previewImage}
+											alt="Preview"
+											style={{
+												width: '100%',
+												height: 'auto',
+												objectFit: 'contain',
+											}}
+										/>
+										<IconButton
+											onClick={handleClose}
+											sx={{
+												position: 'absolute',
+												top: 10,
+												right: 10,
+												color: 'white',
+											}}
+										>
+											<CloseIcon />
+										</IconButton>
+									</DialogContent>
+								</Dialog>
 
 								{/* Buttons for removing, adding, and deleting */}
 								<Box
@@ -93,7 +203,7 @@ function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick
 									>
 										<Button
 											variant="contained"
-											onClick={() => onDecrementClick(item)}
+											onClick={() => onDecrementClick(items[itemIndex])}
 											sx={{
 												flex: 1, // Each button takes up equal space
 												backgroundColor: '#E74032', // Custom color
@@ -110,7 +220,7 @@ function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick
 										</Button>
 										<Button
 											variant="contained"
-											onClick={() => onIncrementClick(item)}
+											onClick={() => onIncrementClick(items[itemIndex])}
 											sx={{
 												flex: 1, // Each button takes up equal space
 												backgroundColor: '#00BF56', // Custom color
@@ -127,7 +237,7 @@ function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick
 										</Button>
 										<Button
 											variant="contained"
-											onClick={() => onDeleteClick(item)}
+											onClick={() => onDeleteClick(items[itemIndex])}
 											sx={{
 												flex: 1, // Each button takes up equal space
 												backgroundColor: '#7787A4', // Custom color

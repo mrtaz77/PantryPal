@@ -36,6 +36,7 @@ import {
 	ref,
 	uploadBytes,
 	getDownloadURL,
+	deleteObject
 } from 'firebase/storage';
 import { firestore, storage } from '@/config/firebase';
 
@@ -265,6 +266,10 @@ export default function PantryPage({ params }) {
 	const handleImgDelete = async (itemId) => {
 		try {
 			const itemRef = doc(firestore, `items/${itemId}`);
+			const itemDoc = await getDoc(itemRef);
+			const fileExt = itemDoc.data().imageExt;
+			const imageRef = ref(storage, `Img/${itemId}${fileExt}`);
+			await deleteObject(imageRef);
 			await updateDoc(itemRef, {
 				imageExt: '',
 			});
@@ -427,7 +432,6 @@ export default function PantryPage({ params }) {
 								onIncrementClick={handleIncrementClick}
 								onRemoveClick={handleDecrementClick}
 								onDeleteClick={handleDeleteClick}
-								onImgUpload={handleImgUpload}
 								onImgDelete={handleImgDelete}
 							/>
 						</CardContent>

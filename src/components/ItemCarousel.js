@@ -9,7 +9,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import PreviewIcon from '@mui/icons-material/Preview';
 import CloseIcon from '@mui/icons-material/Close';
 
-function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick }) {
+function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick, onImgDelete }) {
 	const [previewOpen, setPreviewOpen] = useState(false);
 	const [previewImage, setPreviewImage] = useState('');
 
@@ -146,6 +146,17 @@ function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick
 													sx={{
 														color: 'white',
 														fontSize: 50,
+													}}
+												/>
+
+												<DeleteForeverIcon
+													sx={{
+														color: 'white',
+														fontSize: 50,
+													}}
+													onClick={async (e) => {
+														e.stopPropagation();
+														await onImgDelete(items[itemIndex].itemId);
 													}}
 												/>
 											</Box>

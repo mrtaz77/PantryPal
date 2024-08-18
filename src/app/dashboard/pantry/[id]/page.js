@@ -448,7 +448,7 @@ export default function PantryPage({ params }) {
 							<ItemCarousel
 								items={filteredItems} // Pass filtered items here
 								onIncrementClick={handleIncrementClick}
-								onRemoveClick={handleDecrementClick}
+								onDecrementClick={handleDecrementClick}
 								onDeleteClick={handleDeleteClick}
 								onImgDelete={handleImgDelete}
 								onImgUpload={handleImgUpload}

@@ -37,7 +37,7 @@ const style = {
 	boxShadow: 24,
 	p: 4,
 };
-import styles from './DashBoardCard.module.css';
+import styles from './dashBoardCard.module.css';
 import CustomPieChart from '@/components/CustomPieChart';
 import CustomBarChart from '@/components/CustomBarChart';
 

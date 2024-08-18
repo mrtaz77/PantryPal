@@ -200,6 +200,10 @@ export default function PantryPage({ params }) {
 		}
 		try {
 			const itemRef = doc(firestore, 'items', item.itemId);
+			const itemDoc = await getDoc(itemRef);
+			const fileExt = itemDoc.data().imageExt;
+			const imageRef = ref(storage, `Img/${item.itemId}${fileExt}`);
+			await deleteObject(imageRef);
 			await deleteDoc(itemRef);
 			const pantryRef = doc(firestore, 'pantries', params.id);
 			const deletedQuantity = -item.quantity;
@@ -246,6 +250,20 @@ export default function PantryPage({ params }) {
 	);
 
 	const handleImgUpload = async (file, fileExtension, itemId) => {
+		// Validate file type
+        const validExtensions = ['.png', '.jpeg', '.jpg'];
+        if (!validExtensions.includes(fileExtension.toLowerCase())) {
+            alert('Invalid file type. Only .png, .jpeg, and .jpg are allowed.');
+			return
+		}
+
+        // Validate file size (limit to 2MB for example)
+        const maxSize = 2 * 1024 * 1024; // 2MB
+        if (file.size > maxSize) {
+            alert('File size exceeds the limit of 2MB.');
+			return;
+        }
+
 		try {
 			const storageRef = ref(storage, `Img/${itemId}${fileExtension}`);
 			await uploadBytes(storageRef, file);
@@ -433,6 +451,7 @@ export default function PantryPage({ params }) {
 								onRemoveClick={handleDecrementClick}
 								onDeleteClick={handleDeleteClick}
 								onImgDelete={handleImgDelete}
+								onImgUpload={handleImgUpload}
 							/>
 						</CardContent>
 					</Card>

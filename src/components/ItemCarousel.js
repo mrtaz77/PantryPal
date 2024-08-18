@@ -8,8 +8,9 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import PreviewIcon from '@mui/icons-material/Preview';
 import CloseIcon from '@mui/icons-material/Close';
+import UploadIcon from '@mui/icons-material/Upload';
 
-function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick, onImgDelete }) {
+function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick, onImgUpload, onImgDelete }) {
 	const [previewOpen, setPreviewOpen] = useState(false);
 	const [previewImage, setPreviewImage] = useState('');
 
@@ -153,6 +154,7 @@ function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick
 													sx={{
 														color: 'white',
 														fontSize: 50,
+														marginLeft: 2, // Add some space between the icons
 													}}
 													onClick={async (e) => {
 														e.stopPropagation();
@@ -161,7 +163,39 @@ function ItemCarousel({ items, onDecrementClick, onIncrementClick, onDeleteClick
 												/>
 											</Box>
 										</>
-									) : null}
+									) : (
+										<>
+											{/* Upload Icon for Empty Image */}
+											<Box
+												sx={{
+													display: 'flex',
+													flexDirection: 'column',
+													alignItems: 'center',
+													justifyContent: 'center',
+													cursor: 'pointer',
+													'&:hover': {
+														opacity: 0.7,
+													},
+												}}
+												onClick={() => document.getElementById(`file-input-${itemIndex}`).click()}
+											>
+												<UploadIcon sx={{ fontSize: 50, color: '#888' }} />
+												<input
+													type="file"
+													accept=".png,.jpeg,.jpg"
+													id={`file-input-${itemIndex}`}
+													style={{ display: 'none' }}
+													onChange={(e) => {
+														const file = e.target.files[0];
+														if (file) {
+															const fileExtension = `.${file.name.split('.').pop()}`;
+															onImgUpload(file, fileExtension, items[itemIndex].itemId);
+														}
+													}}
+												/>
+											</Box>
+										</>
+									)}
 								</Box>
 
 								{/* Modal for image preview */}

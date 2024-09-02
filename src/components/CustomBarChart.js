@@ -29,13 +29,14 @@ export default function CustomBarChart({ items, xLabel, yLabel, title, yAxisLabe
 			<BarChart
 				width={400}
 				height={200}
+				margin={{ left: 50, right: 20, top: 20, bottom: 50 }}
 				series={[
 					{
 						data: yAxisData,
 					},
 				]}
 				xAxis={[{
-					data: xAxisLabels, // Set x-axis labels here
+					data: xAxisLabels,
 					scaleType: 'band'
 				}]}
 				{...chartSetting}
